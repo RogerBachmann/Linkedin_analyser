@@ -7,7 +7,7 @@ import io
 # --- Configuration ---
 APP_PASSWORD = "swisscareer"
 
-st.set_page_config(page_title="Swiss LinkedIn Fact-Based Auditor", page_icon="🔗", layout="wide")
+st.set_page_config(page_title="Swiss LinkedIn Brand Optimizer", page_icon="🔗", layout="wide")
 
 # --- API Initialization ---
 try:
@@ -19,6 +19,7 @@ except Exception:
 
 @st.cache_resource
 def get_model():
+    # Attempt to load the highest performing model available to the key
     priority = ["gemini-3-flash", "gemini-2.5-flash", "gemini-1.5-flash-latest"]
     try:
         available = [m.name.split('/')[-1] for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
@@ -43,18 +44,27 @@ def extract_text_safe(uploaded_file):
         return None
 
 # --- UI ---
-st.title("🇨🇭 Branded LinkedIn Audit: Data-Driven Strategy")
+st.title("🇨🇭 Branded LinkedIn Audit: Fact-Based Strategy")
 
+# Sidebar Auth
 auth_pass = st.sidebar.text_input("App Password", type="password")
 if auth_pass != APP_PASSWORD:
     if auth_pass: st.sidebar.error("Incorrect Password")
+    st.info("Please enter the password in the sidebar to unlock.")
     st.stop()
 
+st.sidebar.success(f"AI Engine: {model_instance.model_name}")
+
+# Inputs
 col1, col2 = st.columns(2)
 with col1:
-    li_file = st.file_uploader("Upload LinkedIn PDF", type=["pdf"])
+    st.subheader("LinkedIn Profile")
+    li_file = st.file_uploader("Upload Profile PDF", type=["pdf"])
+
 with col2:
+    st.subheader("Job Description")
     jd_file = st.file_uploader("Upload JD PDF (Optional)", type=["pdf"])
+    jd_text_manual = st.text_area("Or paste JD text here", height=200)
 
 if st.button("🚀 Generate Fact-Based Audit"):
     if not li_file:
@@ -64,14 +74,18 @@ if st.button("🚀 Generate Fact-Based Audit"):
         status.info("⏳ Analyzing profile against Swiss Life Sciences benchmarks...")
         
         li_content = extract_text_safe(li_file)
-        jd_content = extract_text_safe(jd_file) if jd_file else "Standard Swiss Pharma/Biotech Requirements"
-
-        # PROMPT ENFORCING FACTUAL ARGUMENTS
-        prompt = f"""
-        You are a Senior Swiss Life Sciences Recruiter. Your task is to audit this LinkedIn profile.
         
-        CRITICAL INSTRUCTION: Do not provide generic advice. Support every recommendation with 
-        FACTS, STATISTICS, or RECRUITER BEHAVIOR DATA (e.g., "Profiles with X receive Y% more engagement").
+        # Logic to handle both file and text area for JD
+        if jd_file:
+            jd_content = extract_text_safe(jd_file)
+        else:
+            jd_content = jd_text_manual if jd_text_manual.strip() else "Standard Swiss Pharma/Biotech Requirements"
+
+        # FACT-DRIVEN PROMPT
+        prompt = f"""
+        You are a Senior Swiss Life Sciences Recruiter. Audit this LinkedIn profile using only facts and data-driven arguments.
+        
+        CRITICAL: For every section, you must start with a 'The Fact' statement (industry statistics or recruiter behavior data).
         
         STRUCTURE FOR WORD TEMPLATE:
         
@@ -79,48 +93,54 @@ if st.button("🚀 Generate Fact-Based Audit"):
         **OVERALL SCORE: [Score]/100**
         (Based on Keyword Density, SEO ranking factors, and Swiss market conversion rates.)
 
-        ## 2. SECTION-BY-SECTION DATA AUDIT
+        ## 2. COMPREHENSIVE SECTION AUDIT
         
-        ### 2.1 VISUAL BRAND (PICTURE & BANNER)
+        ### 2.1 PICTURE & BANNER
         - **The Fact:** Profiles with professional photos receive 21x more views and 9x more connection requests.
-        - **Recruiter View:** [Audit here]
-        - **Algorithm Logic:** [Audit here]
+        - **Recruiter View:** [Audit]
+        - **Algorithm Logic:** Affects Click-Through Rate (CTR).
         - **Strengthening Actions:** [Specific tips]
 
-        ### 2.2 THE HEADLINE (SEO ENGINE)
-        - **The Fact:** The headline is the #1 weighted field for the LinkedIn Recruiter search algorithm. 
-        - **Recruiter View:** [Audit here]
-        - **Algorithm Logic:** [Audit here]
+        ### 2.2 HEADLINE
+        - **The Fact:** The headline is the #1 weighted field for the LinkedIn Recruiter search algorithm; keywords here carry 3x more weight than in the 'Experience' section.
+        - **Recruiter View:** [Audit]
+        - **Algorithm Logic:** Keyword matching.
         - **Strengthening Actions:** [3 Options]
 
-        ### 2.3 ABOUT SECTION (THE CONVERTER)
-        - **The Fact:** Recruiters spend an average of only 6-8 seconds on initial profile scans; the first 3 lines must convert.
-        - **Recruiter View:** [Audit here]
-        - **Algorithm Logic:** [Audit here]
-        - **Strengthening Actions:** [Detailed rewrite]
+        ### 2.3 ABOUT SECTION
+        - **The Fact:** Heatmap studies show recruiters spend 80% of their "scan time" on the top fold of a profile; the first 3 lines are the 'conversion zone'.
+        - **Recruiter View:** [Audit]
+        - **Algorithm Logic:** Long-tail indexing.
+        - **Strengthening Actions:** [Drafting instructions]
 
-        ### 2.4 EXPERIENCE (PROVEN IMPACT)
-        - **The Fact:** Job descriptions with quantifiable KPIs (e.g., "Reduced lead time by 15%") see a 40% higher response rate in Life Sciences.
-        - **Recruiter View:** [Focus on GMP, FDA, EMA compliance facts]
-        - **Algorithm Logic:** [Audit here]
-        - **Strengthening Actions:** [Specific KPI suggestions]
+        ### 2.4 EXPERIENCE
+        - **The Fact:** Profiles using the 'Action-Result-Impact' framework with quantifiable metrics (KPIs) see a 40% higher response rate in the Swiss Life Sciences hub.
+        - **Recruiter View:** [Focus on GMP/Reg Affairs/Clinical specifics]
+        - **Algorithm Logic:** Verification of years of experience filters.
+        - **Strengthening Actions:** [KPI suggestions]
 
         ### 2.5 SKILLS, PUBLICATIONS & EDUCATION
-        - **The Fact:** Having at least 5 relevant skills makes a profile 33x more likely to be messaged by a recruiter.
-        - **Audit & Strengthening:** [Review Skill list, Education credibility, and Research/Publications]
+        - **The Fact:** LinkedIn reports that users with at least 5 relevant skills are 33x more likely to be contacted by recruiters.
+        - **Recruiter View:** Technical validation.
+        - **Algorithm Logic:** Direct filter matching.
+        - **Strengthening Actions:** [List 10 priority skills]
 
-        ### 2.6 RECOMMENDATIONS & VOLUNTEERING
-        - **The Fact:** Social proof acts as a "trust multiplier" in the Swiss market, reducing perceived hiring risk.
-        - **Audit & Strengthening:** [Who to contact and why]
+        ### 2.6 RECOMMENDATIONS
+        - **The Fact:** Social proof serves as a 'risk mitigator'; profiles with 3+ recommendations from superiors have a significantly higher trust score in Swiss hiring.
+        - **Audit & Strengthening:** [Who to ask]
 
-        ## 3. SWISS MARKET SPECIFICS (FACTS ON LOCAL HIRING)
-        - **Fact:** 85% of Swiss HR professionals filter by 'Work Permit' status and 'Language Proficiency' (A1-C2) immediately.
-        - **Audit:** [Does the profile meet these Swiss standards?]
+        ### 2.7 LANGUAGES, PERMITS & VOLUNTEERING
+        - **The Fact:** 85% of Swiss recruiters filter by 'Language Proficiency' (A1-C2) and 'Work Permit' status immediately to avoid legal/logistic bottlenecks.
+        - **Audit:** [Strengthen based on Swiss standards]
+
+        ## 3. SEO KEYWORD MATRIX (JD TARGETING)
+        - **Top Missing Keywords:** [List keywords missing compared to JD]
+        - **Recruiter Search Strings:** [3 Boolean strings to find this person]
 
         ## 4. TOP 3 STRATEGIC ACTION ITEMS
-        1. [Action 1]
-        2. [Action 2]
-        3. [Action 3]
+        1. [Most urgent]
+        2. [Second most urgent]
+        3. [Long-term brand tip]
 
         PROFILE: {li_content[:7000]}
         JD: {jd_content[:3000]}
@@ -129,8 +149,8 @@ if st.button("🚀 Generate Fact-Based Audit"):
         try:
             response = model_instance.generate_content(prompt)
             status.empty()
-            st.success("✅ Fact-Based Audit Complete")
+            st.success("✅ Analysis Complete")
             st.markdown(response.text)
-            st.download_button("📩 Download for Word", response.text, "LinkedIn_Fact_Audit.txt")
+            st.download_button("📩 Download Report", response.text, "LinkedIn_Audit_Report.txt")
         except Exception as e:
-            st.error(f"❌ Error: {e}")
+            st.error(f"❌ AI Error: {e}")
