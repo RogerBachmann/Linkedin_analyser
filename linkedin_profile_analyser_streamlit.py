@@ -4,22 +4,26 @@ import google.generativeai as genai
 import re
 import io
 
-# --- Configuration ---
-APP_PASSWORD = "swisscareer"
-
+# --- Page Configuration ---
 st.set_page_config(page_title="Swiss LinkedIn Brand Optimizer", page_icon="🔗", layout="wide")
 
-# --- API Initialization ---
+# --- API & Security Initialization (Using Secrets) ---
 try:
+    # Fetch credentials from Streamlit Secrets
+    APP_PASSWORD = st.secrets["APP_PASSWORD"]
     GEMINI_API_KEY = st.secrets["GEMINI_API_KEY"]
+    
+    # Configure Gemini
     genai.configure(api_key=GEMINI_API_KEY)
-except Exception:
-    st.error("🔑 API Key missing in Streamlit Secrets.")
+except KeyError as e:
+    st.error(f"🔑 Secret missing: {e}. Please add it to the Streamlit Secrets dashboard.")
+    st.stop()
+except Exception as e:
+    st.error(f"❌ Initialization Error: {e}")
     st.stop()
 
 @st.cache_resource
 def get_model():
-    # Attempt to load the highest performing model available to the key
     priority = ["gemini-3-flash", "gemini-2.5-flash", "gemini-1.5-flash-latest"]
     try:
         available = [m.name.split('/')[-1] for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
@@ -43,10 +47,10 @@ def extract_text_safe(uploaded_file):
         st.error(f"Error reading PDF: {e}")
         return None
 
-# --- UI ---
-st.title("🇨🇭 Branded LinkedIn Audit: Fact-Based Strategy")
+# --- UI Layout ---
+st.title("🇨🇭 Branded LinkedIn Audit: Data-Driven Strategy")
 
-# Sidebar Auth
+# Sidebar Authentication using the secret
 auth_pass = st.sidebar.text_input("App Password", type="password")
 if auth_pass != APP_PASSWORD:
     if auth_pass: st.sidebar.error("Incorrect Password")
@@ -55,7 +59,6 @@ if auth_pass != APP_PASSWORD:
 
 st.sidebar.success(f"AI Engine: {model_instance.model_name}")
 
-# Inputs
 col1, col2 = st.columns(2)
 with col1:
     st.subheader("LinkedIn Profile")
@@ -75,7 +78,6 @@ if st.button("🚀 Generate Fact-Based Audit"):
         
         li_content = extract_text_safe(li_file)
         
-        # Logic to handle both file and text area for JD
         if jd_file:
             jd_content = extract_text_safe(jd_file)
         else:
@@ -96,51 +98,51 @@ if st.button("🚀 Generate Fact-Based Audit"):
         ## 2. COMPREHENSIVE SECTION AUDIT
         
         ### 2.1 PICTURE & BANNER
-        - **The Fact:** Profiles with professional photos receive 21x more views and 9x more connection requests.
-        - **Recruiter View:** [Audit]
-        - **Algorithm Logic:** Affects Click-Through Rate (CTR).
-        - **Strengthening Actions:** [Specific tips]
+        - **The Fact:** Profiles with professional photos receive 21x more views and 9x more connection requests than those without.
+        - **Recruiter View:** Used for instant credibility and personal brand alignment.
+        - **Algorithm Logic:** Affects Click-Through Rate (CTR) in search results.
+        - **Strengthening Actions:** [Specific tips for banner and photo]
 
         ### 2.2 HEADLINE
         - **The Fact:** The headline is the #1 weighted field for the LinkedIn Recruiter search algorithm; keywords here carry 3x more weight than in the 'Experience' section.
-        - **Recruiter View:** [Audit]
-        - **Algorithm Logic:** Keyword matching.
-        - **Strengthening Actions:** [3 Options]
+        - **Recruiter View:** Determines if they click your profile or keep scrolling.
+        - **Algorithm Logic:** Primary keyword indexing field.
+        - **Strengthening Actions:** [Provide 3 tiered options]
 
         ### 2.3 ABOUT SECTION
-        - **The Fact:** Heatmap studies show recruiters spend 80% of their "scan time" on the top fold of a profile; the first 3 lines are the 'conversion zone'.
-        - **Recruiter View:** [Audit]
-        - **Algorithm Logic:** Long-tail indexing.
-        - **Strengthening Actions:** [Drafting instructions]
+        - **The Fact:** Eye-tracking studies confirm recruiters spend 80% of their "scan time" on the top fold; the first 3 lines are your only 'conversion zone'.
+        - **Recruiter View:** Assesses tone, motivation, and culture fit.
+        - **Algorithm Logic:** Indexed for long-tail keywords.
+        - **Strengthening Actions:** [Detailed rewrite advice]
 
-        ### 2.4 EXPERIENCE
-        - **The Fact:** Profiles using the 'Action-Result-Impact' framework with quantifiable metrics (KPIs) see a 40% higher response rate in the Swiss Life Sciences hub.
-        - **Recruiter View:** [Focus on GMP/Reg Affairs/Clinical specifics]
-        - **Algorithm Logic:** Verification of years of experience filters.
-        - **Strengthening Actions:** [KPI suggestions]
+        ### 2.4 PROFESSIONAL EXPERIENCE
+        - **The Fact:** Job descriptions that include quantifiable KPIs see a 40% higher response rate in the Swiss Life Sciences hub.
+        - **Recruiter View:** Verification of GMP, Clinical, or Regulatory impact.
+        - **Algorithm Logic:** Confirms years of experience for specific job filters.
+        - **Strengthening Actions:** [Provide 5 specific KPI suggestions]
 
         ### 2.5 SKILLS, PUBLICATIONS & EDUCATION
-        - **The Fact:** LinkedIn reports that users with at least 5 relevant skills are 33x more likely to be contacted by recruiters.
-        - **Recruiter View:** Technical validation.
-        - **Algorithm Logic:** Direct filter matching.
+        - **The Fact:** LinkedIn reports that users with at least 5 relevant skills are 33x more likely to be messaged by recruiters.
+        - **Recruiter View:** Verification of technical stack.
+        - **Algorithm Logic:** Core filter matching for search queries.
         - **Strengthening Actions:** [List 10 priority skills]
 
-        ### 2.6 RECOMMENDATIONS
-        - **The Fact:** Social proof serves as a 'risk mitigator'; profiles with 3+ recommendations from superiors have a significantly higher trust score in Swiss hiring.
-        - **Audit & Strengthening:** [Who to ask]
+        ### 2.6 RECOMMENDATIONS & VOLUNTEERING
+        - **The Fact:** Social proof serves as a 'risk mitigator'; 3+ recent recommendations from superiors create a "trust multiplier" in the Swiss market.
+        - **Audit & Strengthening:** [Who to contact and what to ask for]
 
         ### 2.7 LANGUAGES, PERMITS & VOLUNTEERING
-        - **The Fact:** 85% of Swiss recruiters filter by 'Language Proficiency' (A1-C2) and 'Work Permit' status immediately to avoid legal/logistic bottlenecks.
-        - **Audit:** [Strengthen based on Swiss standards]
+        - **The Fact:** 85% of Swiss recruiters filter by 'Language Proficiency' and 'Work Permit' (B, C, EU) status immediately.
+        - **Audit:** [Specific feedback on Swiss market compliance]
 
         ## 3. SEO KEYWORD MATRIX (JD TARGETING)
         - **Top Missing Keywords:** [List keywords missing compared to JD]
-        - **Recruiter Search Strings:** [3 Boolean strings to find this person]
+        - **Recruiter Search Strings:** [Provide 3 Boolean strings]
 
         ## 4. TOP 3 STRATEGIC ACTION ITEMS
-        1. [Most urgent]
-        2. [Second most urgent]
-        3. [Long-term brand tip]
+        1. [Most urgent change]
+        2. [High impact change]
+        3. [Long-term brand change]
 
         PROFILE: {li_content[:7000]}
         JD: {jd_content[:3000]}
